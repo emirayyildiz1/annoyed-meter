@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gıcık-meter & Notlar</title>
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --farah-color: #ff9f43;
+            --emir-color: #0984e3;
+            --bg-color: #f8f9fc;
+            --gauge-bg: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #2d3436;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Yan Yana Düzen İçin Ana Taşıyıcı */
+        .main-wrapper {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* Ortak Kart Tasarımı */
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            width: 350px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meter-card { text-align: center; }
+
+        h1, h2 { margin-top: 0; font-weight: 700; }
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.5em; text-align: center; color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 10px;}
+
+        /* Üstteki Switch/Anahtar Bölümü */
+        .top-switch-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .toggle-label { transition: color 0.3s; }
+
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 30px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: var(--farah-color); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        #emirLabel { color: var(--emir-color); }
+        #farahLabel { color: #888; }
+        input:checked ~ #farahLabel { color: var(--farah-color); }
+        input:checked ~ #emirLabel { color: #888; }
+
+        /* Dairesel Ölçek (Gauge) */
+        .gauge-outer {
+            width: 220px; height: 220px; margin: 40px auto; border-radius: 50%;
+            background: var(--gauge-bg); position: relative; display: flex;
+            justify-content: center; align-items: center; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .gauge-inner {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: conic-gradient(var(--gauge-color, limegreen) 0%, var(--gauge-color, limegreen) 0%, var(--gauge-bg) 0% 100%);
+            transition: background 0.3s ease; transform: rotate(-90deg);
+        }
+
+        .gauge-center {
+            position: absolute; width: 170px; height: 170px; background-color: white;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .value-display { font-size: 3em; font-weight: 800; }
+        .percent-sign { font-size: 0.5em; font-weight: 500; vertical-align: super; }
+
+        .controls { margin-top: 20px; transition: opacity 0.3s ease; }
+        .hidden { display: none !important; opacity: 0; }
+
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--farah-color); }
+        p.info-text { color: #888; font-size: 0.85em; margin-top: 5px; }
+
+        /* --- NOTLAR BÖLÜMÜ --- */
+        .notes-list {
+            flex-grow: 1; overflow-y: auto; max-height: 250px; margin-bottom: 15px; padding-right: 5px;
+        }
+
+        .note-item {
+            background: #f1f2f6; padding: 12px; border-radius: 10px; margin-bottom: 10px;
+            font-size: 0.9em; border-left: 4px solid var(--farah-color); word-wrap: break-word;
+            display: flex; flex-direction: column;
+        }
+
+        .note-header {
+            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;
+        }
+
+        .note-date { font-size: 0.75em; color: #888; }
+
+        /* Silme Butonu Tasarımı */
+        .delete-btn {
+            background: transparent; color: #ff7675; border: none; padding: 0 5px;
+            font-size: 1.2em; cursor: pointer; line-height: 1; border-radius: 50%;
+        }
+        .delete-btn:hover { background: transparent; color: #d63031; transform: scale(1.1); }
+
+        .note-input-area {
+            display: flex; flex-direction: column; gap: 10px; border-top: 2px solid #eee; padding-top: 15px;
+        }
+
+        textarea {
+            width: 100%; height: 70px; padding: 10px; border: 1px solid #ddd;
+            border-radius: 10px; resize: none; font-family: inherit; box-sizing: border-box;
+        }
+        textarea:focus { outline: none; border-color: var(--farah-color); }
+
+        button.add-btn {
+            background-color: var(--farah-color); color: white; border: none; padding: 10px;
+            border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s;
+        }
+        button.add-btn:hover { background-color: #e58e3c; }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <!-- SOL KART: GICIK-METER -->
+        <div class="card meter-card">
+            <div class="top-switch-container">
+                <span class="toggle-label" id="emirLabel">Emir</span>
+                <label class="switch">
+                    <input type="checkbox" id="userToggle" checked>
+                    <span class="slider"></span>
+                </label>
+                <span class="toggle-label" id="farahLabel">Farah</span>
+            </div>
+
+            <h1>Gıcık-meter</h1>
+
+            <div class="gauge-outer">
+                <div class="gauge-inner" id="gaugeBody"></div>
+                <div class="gauge-center">
+                    <div class="value-display" id="meterValue">0<span class="percent-sign">%</span></div>
+                </div>
+            </div>
+
+            <div class="controls" id="controlSection">
+                <label for="giciSlider">Değeri Ayarla:</label><br>
+                <input type="range" id="giciSlider" min="0" max="100" value="0">
+                <p class="info-text">Gıcıklık değerini güncellemek için kaydırın.</p>
+            </div>
+
+            <div class="controls hidden" id="viewSection">
+                <p class="info-text">Emir modunda değer sadece görüntülenir.</p>
+            </div>
+        </div>
+
+        <!-- SAĞ KART: NOTLAR -->
+        <div class="card">
+            <h2>Gıcıklık Sebepleri</h2>
+            
+            <div class="notes-list" id="notesList">
+                <!-- Notlar buraya JS ile eklenecek -->
+            </div>
+
+            <!-- Bu alan Emir modunda gizlenecek -->
+            <div class="note-input-area" id="noteInputArea">
+                <textarea id="noteInput" placeholder="Buraya bir not ekle..."></textarea>
+                <button class="add-btn" id="addNoteBtn">Not Ekle</button>
+            </div>
+            
+            <p class="info-text hidden" id="emirNoteInfo" style="text-align: center; margin-top: auto;">
+                Emir sadece notları okuyabilir.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. GICIK-METER MANTIĞI ---
+        const userToggle = document.getElementById('userToggle');
+        const meterValue = document.getElementById('meterValue');
+        const giciSlider = document.getElementById('giciSlider');
+        const gaugeBody = document.getElementById('gaugeBody');
+        const controlSection = document.getElementById('controlSection');
+        const viewSection = document.getElementById('viewSection');
+
+        let savedValue = localStorage.getItem('gicikValue') || 0;
+        giciSlider.value = savedValue;
+
+        function updateGauge(value) {
+            meterValue.innerHTML = `${value}<span class="percent-sign">%</span>`;
+            
+            let color, glow;
+            if (value < 30) { color = "#00b894"; glow = "0 0 10px rgba(0, 184, 148, 0.4)"; }
+            else if (value < 70) { color = "#ffeaa7"; glow = "0 0 15px rgba(255, 234, 167, 0.6)"; }
+            else { color = "#d63031"; glow = "0 0 25px rgba(214, 48, 49, 0.8)"; }
+
+            gaugeBody.style.setProperty('--gauge-color', color);
+            gaugeBody.style.setProperty('--farah-color', color);
+            gaugeBody.style.boxShadow = glow;
+            gaugeBody.style.background = `conic-gradient(${color} 0%, ${color} ${value}%, var(--gauge-bg) ${value}% 100%)`;
+            
+            localStorage.setItem('gicikValue', value);
+        }
+
+        giciSlider.addEventListener('input', function() { updateGauge(this.value); });
+        updateGauge(savedValue); 
+
+
+        // --- 2. NOTLAR MANTIĞI ---
+        const noteInputArea = document.getElementById('noteInputArea');
+        const emirNoteInfo = document.getElementById('emirNoteInfo');
+        const noteInput = document.getElementById('noteInput');
+        const addNoteBtn = document.getElementById('addNoteBtn');
+        const notesList = document.getElementById('notesList');
+
+        let notesArray = JSON.parse(localStorage.getItem('farahNotes')) || [];
+
+        // Notları ekrana basma fonksiyonu
+        function renderNotes() {
+            notesList.innerHTML = '';
+            if(notesArray.length === 0) {
+                notesList.innerHTML = '<p style="color:#aaa; text-align:center; margin-top:50px;">Henüz hiç not yok.</p>';
+                return;
+            }
+
+            // O anki aktif modu kontrol et (True = Farah, False = Emir)
+            const isFarahMode = userToggle.checked;
+
+            notesArray.forEach((note, index) => {
+                const div = document.createElement('div');
+                div.className = 'note-item';
+                
+                // Eğer Farah modundaysak silme butonunu oluştur, değilse boş bırak
+                let deleteBtnHtml = isFarahMode ? `<button class="delete-btn" onclick="deleteNote(${index})">&times;</button>` : '';
+
+                div.innerHTML = `
+                    <div class="note-header">
+                        <span class="note-date">${note.date}</span>
+                        ${deleteBtnHtml}
+                    </div>
+                    <div class="note-text">${note.text}</div>
+                `;
+                notesList.appendChild(div);
+            });
+            notesList.scrollTop = notesList.scrollHeight;
+        }
+
+        // Not Silme Fonksiyonu
+        function deleteNote(index) {
+            notesArray.splice(index, 1); // Diziden ilgili notu çıkar
+            localStorage.setItem('farahNotes', JSON.stringify(notesArray)); // Hafızayı güncelle
+            renderNotes(); // Ekranı yenile
+        }
+
+        addNoteBtn.addEventListener('click', function() {
+            const text = noteInput.value.trim();
+            if(text !== '') {
+                const now = new Date();
+                const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} - ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+                
+                notesArray.push({ text: text, date: timeString });
+                localStorage.setItem('farahNotes', JSON.stringify(notesArray));
+                
+                noteInput.value = '';
+                renderNotes();
+            }
+        });
+
+        renderNotes(); 
+
+
+        // --- 3. MOD GEÇİŞ (TOGGLE) MANTIĞI ---
+        userToggle.addEventListener('change', function() {
+            if (this.checked) {
+                // Farah Modu
+                controlSection.classList.remove('hidden');
+                viewSection.classList.add('hidden');
+                noteInputArea.classList.remove('hidden');
+                emirNoteInfo.classList.add('hidden');
+            } else {
+                // Emir Modu
+                controlSection.classList.add('hidden');
+                viewSection.classList.remove('hidden');
+                noteInputArea.classList.add('hidden');
+                emirNoteInfo.classList.remove('hidden');
+            }
+            // Mod değiştiğinde notları yeniden çiz (silme butonlarını gizle/göster)
+            renderNotes();
+        });
+
+    </script>
+</body>
+</html>
