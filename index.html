@@ -6,11 +6,22 @@
     <title>Gıcık-meter & Notlar</title>
     <style>
         :root {
+            /* Varsayılan (Bad) Tema Renkleri */
             --primary-color: #6c5ce7;
             --farah-color: #ff9f43;
             --emir-color: #0984e3;
             --bg-color: #f8f9fc;
             --gauge-bg: #e0e0e0;
+            --text-color: #2d3436;
+        }
+
+        /* Good Tema Renkleri */
+        body.good-theme {
+            --primary-color: #00b894;
+            --farah-color: #00cec9;
+            --emir-color: #6c5ce7;
+            --bg-color: #e8f8f5;
+            --text-color: #1e272e;
         }
 
         body {
@@ -18,13 +29,48 @@
             background-color: var(--bg-color);
             margin: 0;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            color: #2d3436;
+            color: var(--text-color);
             padding: 20px;
             box-sizing: border-box;
+            transition: background-color 0.4s ease;
         }
+
+        /* En Üstteki Ana Mod (Bad/Good) Switch'i */
+        .master-switch-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            background: white;
+            padding: 10px 25px;
+            border-radius: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        #themeBadLabel { color: #d63031; transition: 0.3s; }
+        #themeGoodLabel { color: #888; transition: 0.3s; }
+
+        input#themeToggle:checked ~ #themeGoodLabel { color: #00b894; }
+        input#themeToggle:checked ~ #themeBadLabel { color: #888; }
+
+        .theme-switch { position: relative; display: inline-block; width: 60px; height: 30px; }
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        .theme-slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #d63031; transition: .4s; border-radius: 30px;
+        }
+        .theme-slider:before {
+            position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input#themeToggle:checked + .theme-slider { background-color: #00b894; }
+        input#themeToggle:checked + .theme-slider:before { transform: translateX(30px); }
+
 
         .main-wrapper {
             display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 900px; width: 100%;
@@ -33,14 +79,16 @@
         .card {
             background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             width: 350px; position: relative; display: flex; flex-direction: column;
+            transition: box-shadow 0.3s ease;
         }
 
         .meter-card { text-align: center; }
 
-        h1, h2 { margin-top: 0; font-weight: 700; }
+        h1, h2 { margin-top: 0; font-weight: 700; transition: color 0.3s; }
         h1 { font-size: 2em; }
         h2 { font-size: 1.5em; text-align: center; color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 10px;}
 
+        /* Emir/Farah Switch'i */
         .top-switch-container {
             position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 10px; font-weight: bold;
         }
@@ -68,7 +116,7 @@
         input:checked ~ #emirLabel { color: #888; }
 
         .gauge-outer {
-            width: 220px; height: 220px; margin: 40px auto; border-radius: 50%;
+            width: 220px; height: 220px; margin: 40px auto 10px auto; border-radius: 50%;
             background: var(--gauge-bg); position: relative; display: flex;
             justify-content: center; align-items: center; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
         }
@@ -87,7 +135,14 @@
         .value-display { font-size: 3em; font-weight: 800; }
         .percent-sign { font-size: 0.5em; font-weight: 500; vertical-align: super; }
 
-        .controls { margin-top: 20px; transition: opacity 0.3s ease; }
+        .last-edit-display {
+            font-size: 0.85em;
+            color: #a4b0be;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .controls { margin-top: 10px; transition: opacity 0.3s ease; }
         .hidden { display: none !important; opacity: 0; }
 
         input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--farah-color); }
@@ -100,6 +155,7 @@
             background: #f1f2f6; padding: 12px; border-radius: 10px; margin-bottom: 10px;
             font-size: 0.9em; border-left: 4px solid var(--farah-color); word-wrap: break-word;
             display: flex; flex-direction: column;
+            transition: border-color 0.3s ease;
         }
 
         .note-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
@@ -121,13 +177,23 @@
 
         button.add-btn {
             background-color: var(--farah-color); color: white; border: none; padding: 10px;
-            border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s;
+            border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s ease;
         }
-        button.add-btn:hover { background-color: #e58e3c; }
+        button.add-btn:hover { filter: brightness(1.1); }
 
     </style>
 </head>
 <body>
+
+    <!-- ÜST TEMA (BAD/GOOD) SWITCH'İ -->
+    <div class="master-switch-container">
+        <span id="themeBadLabel">Bad Meter</span>
+        <label class="theme-switch">
+            <input type="checkbox" id="themeToggle">
+            <span class="theme-slider"></span>
+        </label>
+        <span id="themeGoodLabel">Good Meter</span>
+    </div>
 
     <div class="main-wrapper">
         <!-- SOL KART: GICIK-METER -->
@@ -141,7 +207,7 @@
                 <span class="toggle-label" id="farahLabel">Farah</span>
             </div>
 
-            <h1>Gıcık-meter</h1>
+            <h1 id="mainTitle">Bad Gıcık-meter</h1>
 
             <div class="gauge-outer">
                 <div class="gauge-inner" id="gaugeBody"></div>
@@ -149,11 +215,16 @@
                     <div class="value-display" id="meterValue">0<span class="percent-sign">%</span></div>
                 </div>
             </div>
+            
+            <!-- LAST EDIT TIME GÖSTERGESİ -->
+            <div class="last-edit-display">
+                last edit time : <span id="lastEditTime">--:--</span>
+            </div>
 
             <div class="controls" id="controlSection">
                 <label for="giciSlider">Değeri Ayarla:</label><br>
                 <input type="range" id="giciSlider" min="0" max="100" value="0">
-                <p class="info-text">Gıcıklık değerini güncellemek için kaydırın. (Anında güncellenir)</p>
+                <p class="info-text">Değeri güncellemek için kaydırın. (Anında güncellenir)</p>
             </div>
 
             <div class="controls hidden" id="viewSection">
@@ -163,7 +234,7 @@
 
         <!-- SAĞ KART: NOTLAR -->
         <div class="card">
-            <h2>Farah'ın Notları</h2>
+            <h2 id="notesTitle">Farah'ın Notları (Bad)</h2>
             
             <div class="notes-list" id="notesList">
                 <p style="color:#aaa; text-align:center; margin-top:50px;">Yükleniyor...</p>
@@ -197,74 +268,86 @@
             measurementId: "G-FL0CDJK94Y"
         };
 
-        // Firebase'i Başlat
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Veritabanı Yolları (Referansları)
-        const gicikRef = ref(db, 'giciklik_seviyesi');
-        const notesRef = ref(db, 'farah_notlari');
+        // İki mod için Firebase Referans Yolları
+        const dbPaths = {
+            bad: {
+                gicik: ref(db, 'giciklik_seviyesi'),      // Eski verilerin korundu
+                notes: ref(db, 'farah_notlari'),          // Eski verilerin korundu
+                time:  ref(db, 'last_edit_time_bad')      
+            },
+            good: {
+                gicik: ref(db, 'good_giciklik_seviyesi'), // Yeni oluşturuldu
+                notes: ref(db, 'good_notlari'),           // Yeni oluşturuldu
+                time:  ref(db, 'last_edit_time_good')     // Yeni oluşturuldu
+            }
+        };
+
+        // Uygulamanın anlık verilerini tutan obje
+        let appData = {
+            bad: { value: 0, notes: [], lastEdit: '--:--' },
+            good: { value: 0, notes: [], lastEdit: '--:--' }
+        };
+
+        // Aktif Mod (Varsayılan olarak 'bad' başlar)
+        let currentAppMode = 'bad'; 
 
         // DOM Elemanları
+        const themeToggle = document.getElementById('themeToggle');
         const userToggle = document.getElementById('userToggle');
         const meterValue = document.getElementById('meterValue');
         const giciSlider = document.getElementById('giciSlider');
         const gaugeBody = document.getElementById('gaugeBody');
-        const controlSection = document.getElementById('controlSection');
-        const viewSection = document.getElementById('viewSection');
-        
+        const lastEditTime = document.getElementById('lastEditTime');
+        const mainTitle = document.getElementById('mainTitle');
+        const notesTitle = document.getElementById('notesTitle');
+        const notesList = document.getElementById('notesList');
         const noteInputArea = document.getElementById('noteInputArea');
         const emirNoteInfo = document.getElementById('emirNoteInfo');
         const noteInput = document.getElementById('noteInput');
         const addNoteBtn = document.getElementById('addNoteBtn');
-        const notesList = document.getElementById('notesList');
+        const controlSection = document.getElementById('controlSection');
+        const viewSection = document.getElementById('viewSection');
 
-        let notesArray = [];
-
-        // --- 1. GICIK-METER ARAYÜZ GÜNCELLEMESİ ---
+        // --- 1. ARAYÜZ GÜNCELLEMELERİ ---
         function updateGaugeUI(value) {
             meterValue.innerHTML = `${value}<span class="percent-sign">%</span>`;
-            giciSlider.value = value; // Slider'ı da senkronize et
+            giciSlider.value = value; 
             
             let color, glow;
-            if (value < 30) { color = "#00b894"; glow = "0 0 10px rgba(0, 184, 148, 0.4)"; }
-            else if (value < 70) { color = "#ffeaa7"; glow = "0 0 15px rgba(255, 234, 167, 0.6)"; }
-            else { color = "#d63031"; glow = "0 0 25px rgba(214, 48, 49, 0.8)"; }
+            if (currentAppMode === 'bad') {
+                // Kötü Mod Renkleri (Değer artarsa Kırmızıya döner)
+                if (value < 30) { color = "#00b894"; glow = "0 0 10px rgba(0, 184, 148, 0.4)"; }
+                else if (value < 70) { color = "#ffeaa7"; glow = "0 0 15px rgba(255, 234, 167, 0.6)"; }
+                else { color = "#d63031"; glow = "0 0 25px rgba(214, 48, 49, 0.8)"; }
+            } else {
+                // İyi Mod Renkleri (Değer artarsa Yeşile/Maviye döner, düşük değer kötüdür)
+                if (value < 30) { color = "#ff7675"; glow = "0 0 10px rgba(255, 118, 117, 0.4)"; }
+                else if (value < 70) { color = "#74b9ff"; glow = "0 0 15px rgba(116, 185, 255, 0.6)"; }
+                else { color = "#00b894"; glow = "0 0 25px rgba(0, 184, 148, 0.8)"; }
+            }
 
             gaugeBody.style.setProperty('--gauge-color', color);
-            gaugeBody.style.setProperty('--farah-color', color);
             gaugeBody.style.boxShadow = glow;
             gaugeBody.style.background = `conic-gradient(${color} 0%, ${color} ${value}%, var(--gauge-bg) ${value}% 100%)`;
         }
 
-        // FİREBASE: Gıcıklık Seviyesi Veritabanında Değiştiğinde Oku (Tüm cihazlarda çalışır)
-        onValue(gicikRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data !== null) {
-                updateGaugeUI(data);
-            }
-        });
-
-        // FİREBASE: Slider Kaydırıldığında Veritabanına Yaz
-        giciSlider.addEventListener('input', function() {
-            set(gicikRef, this.value);
-            updateGaugeUI(this.value); // Kendi ekranımızı beklemeden güncelliyoruz
-        });
-
-        // --- 2. NOTLAR MANTIĞI ---
         function renderNotes() {
             notesList.innerHTML = '';
-            if(!notesArray || notesArray.length === 0) {
+            const activeNotes = appData[currentAppMode].notes;
+
+            if(!activeNotes || activeNotes.length === 0) {
                 notesList.innerHTML = '<p style="color:#aaa; text-align:center; margin-top:50px;">Henüz hiç not yok.</p>';
                 return;
             }
 
             const isFarahMode = userToggle.checked;
 
-            notesArray.forEach((note, index) => {
+            activeNotes.forEach((note, index) => {
                 const div = document.createElement('div');
                 div.className = 'note-item';
-                
                 let deleteBtnHtml = isFarahMode ? `<button class="delete-btn" onclick="window.deleteNote(${index})">&times;</button>` : '';
 
                 div.innerHTML = `
@@ -279,38 +362,93 @@
             notesList.scrollTop = notesList.scrollHeight;
         }
 
-        // Modüller global scope'da çalışmadığı için silme fonksiyonunu window'a ekliyoruz
-        window.deleteNote = function(index) {
-            notesArray.splice(index, 1);
-            set(notesRef, notesArray); // Firebase'i Güncelle
-        };
+        function updateAllUI() {
+            updateGaugeUI(appData[currentAppMode].value);
+            renderNotes();
+            lastEditTime.innerText = appData[currentAppMode].lastEdit;
+        }
 
-        // FİREBASE: Yeni Not Eklendiğinde Veritabanına Yaz
+
+        // --- 2. FİREBASE DİNLEYİCİLERİ (İki mod için de çalışır) ---
+        function attachListeners(mode) {
+            onValue(dbPaths[mode].gicik, (snapshot) => {
+                appData[mode].value = snapshot.val() || 0;
+                if (currentAppMode === mode) updateGaugeUI(appData[mode].value);
+            });
+            onValue(dbPaths[mode].notes, (snapshot) => {
+                appData[mode].notes = snapshot.val() || [];
+                if (currentAppMode === mode) renderNotes();
+            });
+            onValue(dbPaths[mode].time, (snapshot) => {
+                appData[mode].lastEdit = snapshot.val() || '--:--';
+                if (currentAppMode === mode) lastEditTime.innerText = appData[mode].lastEdit;
+            });
+        }
+
+        // Başlangıçta iki veritabanı dalını da dinlemeye başla
+        attachListeners('bad');
+        attachListeners('good');
+
+
+        // --- 3. ETKİLEŞİMLER VE VERİ YAZMA ---
+        
+        // Gıcıklık Seviyesi Değiştiğinde
+        giciSlider.addEventListener('input', function() {
+            const val = this.value;
+            set(dbPaths[currentAppMode].gicik, val); // İlgili moda değeri yaz
+            
+            // Saati hesapla ve kaydet
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            set(dbPaths[currentAppMode].time, timeStr); // İlgili modun saatini yaz
+            
+            updateGaugeUI(val);
+        });
+
+        // Not Eklendiğinde
         addNoteBtn.addEventListener('click', function() {
             const text = noteInput.value.trim();
             if(text !== '') {
                 const now = new Date();
                 const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} - ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
                 
-                // Eğer dizi boşsa hata vermemesi için kontrol et
-                if (!notesArray) notesArray = [];
+                if (!appData[currentAppMode].notes) appData[currentAppMode].notes = [];
                 
-                notesArray.push({ text: text, date: timeString });
-                set(notesRef, notesArray); // Veritabanına gönder
+                appData[currentAppMode].notes.push({ text: text, date: timeString });
+                set(dbPaths[currentAppMode].notes, appData[currentAppMode].notes); // İlgili modun notlarına yaz
                 
                 noteInput.value = '';
             }
         });
 
-        // FİREBASE: Notlar Veritabanında Değiştiğinde Oku (Tüm cihazlarda çalışır)
-        onValue(notesRef, (snapshot) => {
-            const data = snapshot.val();
-            notesArray = data || []; // Eğer veri yoksa boş dizi yap
-            renderNotes();
+        // Not Silindiğinde
+        window.deleteNote = function(index) {
+            appData[currentAppMode].notes.splice(index, 1);
+            set(dbPaths[currentAppMode].notes, appData[currentAppMode].notes);
+        };
+
+        // --- 4. MOD GEÇİŞLERİ (SWITCHLER) ---
+
+        // Ana Tema (Bad/Good) Geçişi
+        themeToggle.addEventListener('change', function() {
+            currentAppMode = this.checked ? 'good' : 'bad';
+            
+            // CSS Sınıfını Değiştir (Temayı ayarlar)
+            if (currentAppMode === 'good') {
+                document.body.classList.add('good-theme');
+                mainTitle.innerText = "Good Gıcık-meter";
+                notesTitle.innerText = "Farah'ın Notları (Good)";
+            } else {
+                document.body.classList.remove('good-theme');
+                mainTitle.innerText = "Bad Gıcık-meter";
+                notesTitle.innerText = "Farah'ın Notları (Bad)";
+            }
+            
+            // O Moda ait verileri ekrana bas
+            updateAllUI();
         });
 
-
-        // --- 3. MOD GEÇİŞ (TOGGLE) MANTIĞI ---
+        // Emir/Farah Geçişi
         userToggle.addEventListener('change', function() {
             if (this.checked) {
                 // Farah Modu
